@@ -11,64 +11,6 @@ into it, and that alone takes test accuracy from 84.7% to 98.7%.
 ![Decision boundaries by polynomial degree](figures/halfmoon-degrees.png)
 
 ---
-
-## The question
-
-`make_moons` produces two interleaving crescents. A linear decision boundary is
-structurally incapable of separating them, so the model plateaus well below its
-ceiling no matter how long it trains.
-
-The standard response is to reach for a more powerful model. This repo takes the
-other route: keep the linear model and expand the feature table with polynomial
-terms, so that a boundary which is linear *in the expanded space* is curved in the
-original one.
-
-The interesting part is not that this works. It is **where** it starts working.
-
----
-
-## Result
-
-500 samples, `noise=0.20`, 70/30 stratified split, `random_state=42`.
-
-| Degree | Columns | Train acc. | Test acc. |
-|---|---|---|---|
-| 1 | 2 | 86.3% | 84.7% |
-| 2 | 5 | 85.7% | 84.7% |
-| 3 | 9 | 96.9% | **98.7%** |
-| 4 | 14 | 98.3% | 98.7% |
-| 5 | 20 | 98.3% | 98.0% |
-| 8 | 44 | 98.3% | 98.0% |
-
-### Degree 2 buys nothing
-
-Identical test accuracy to degree 1, for three extra columns. The fitted boundary
-bends into a shallow parabola and stops there.
-
-The reason is geometric, not statistical. A degree-2 boundary is a conic, and a
-conic changes direction exactly once. These crescents require the boundary to turn
-**twice** — down between the upper moon's tail and the lower moon's body, then back
-up. No amount of data or training fixes an expressiveness gap.
-
-### Degree 3 jumps 14 points
-
-Cubics are the lowest degree admitting an inflection point, and the boundary
-immediately picks up the S-shape that threads the gap between the crescents.
-
-The general rule: **a degree-`k` polynomial boundary can change direction at most
-`k−1` times.** Counting the turns the data requires gives a principled starting
-degree instead of a blind search. Here the count is two, which points at degree 3
-— and degree 3 is what the experiment selects.
-
-### Past degree 3, returns go negative
-
-Degree 8 uses 44 columns, nearly five times degree 3, and scores *lower* on the
-held-out set. Train accuracy stops moving after degree 4, so the extra parameters
-are fitting the 20% label noise. This is the textbook case for L1 regularisation,
-which would drive the redundant high-order coefficients to zero on its own.
-
----
-
 ## Background: what logistic regression actually is
 
 ### It is not "linear regression squashed into 0–1"
@@ -174,6 +116,64 @@ scikit-learn enables L2 regularisation by default, and the reason switching it o
 without thinking is a mistake.
 
 ---
+
+## The question
+
+`make_moons` produces two interleaving crescents. A linear decision boundary is
+structurally incapable of separating them, so the model plateaus well below its
+ceiling no matter how long it trains.
+
+The standard response is to reach for a more powerful model. This repo takes the
+other route: keep the linear model and expand the feature table with polynomial
+terms, so that a boundary which is linear *in the expanded space* is curved in the
+original one.
+
+The interesting part is not that this works. It is **where** it starts working.
+
+---
+
+## Result
+
+500 samples, `noise=0.20`, 70/30 stratified split, `random_state=42`.
+
+| Degree | Columns | Train acc. | Test acc. |
+|---|---|---|---|
+| 1 | 2 | 86.3% | 84.7% |
+| 2 | 5 | 85.7% | 84.7% |
+| 3 | 9 | 96.9% | **98.7%** |
+| 4 | 14 | 98.3% | 98.7% |
+| 5 | 20 | 98.3% | 98.0% |
+| 8 | 44 | 98.3% | 98.0% |
+
+### Degree 2 buys nothing
+
+Identical test accuracy to degree 1, for three extra columns. The fitted boundary
+bends into a shallow parabola and stops there.
+
+The reason is geometric, not statistical. A degree-2 boundary is a conic, and a
+conic changes direction exactly once. These crescents require the boundary to turn
+**twice** — down between the upper moon's tail and the lower moon's body, then back
+up. No amount of data or training fixes an expressiveness gap.
+
+### Degree 3 jumps 14 points
+
+Cubics are the lowest degree admitting an inflection point, and the boundary
+immediately picks up the S-shape that threads the gap between the crescents.
+
+The general rule: **a degree-`k` polynomial boundary can change direction at most
+`k−1` times.** Counting the turns the data requires gives a principled starting
+degree instead of a blind search. Here the count is two, which points at degree 3
+— and degree 3 is what the experiment selects.
+
+### Past degree 3, returns go negative
+
+Degree 8 uses 44 columns, nearly five times degree 3, and scores *lower* on the
+held-out set. Train accuracy stops moving after degree 4, so the extra parameters
+are fitting the 20% label noise. This is the textbook case for L1 regularisation,
+which would drive the redundant high-order coefficients to zero on its own.
+
+---
+
 
 ## The implementation
 
